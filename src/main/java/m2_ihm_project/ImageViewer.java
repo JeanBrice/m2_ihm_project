@@ -3,6 +3,8 @@ package m2_ihm_project;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
@@ -17,6 +19,7 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.Timer;
 
 public class ImageViewer extends JFrame{
 
@@ -28,8 +31,10 @@ public class ImageViewer extends JFrame{
 	private int state, current, timerLevel;
 	JPanel imgs_pane, btns_pane;
 	JButton backward, play, stop, forward;
+	private Timer t;	
 	
 	private List<ImageIcon> imgs;
+	private List<JPanel> wide_imgs;
 	
 	// Constructor
 	public ImageViewer() {
@@ -39,6 +44,12 @@ public class ImageViewer extends JFrame{
 		this.setLayout(new BorderLayout());
 		
 		this.timerLevel = 1;
+		this.t = new Timer(getTimeToWait(), new ActionListener() {
+			
+			public void actionPerformed(ActionEvent e) {
+				behave();
+			}
+		});
 		
 		this.initImg();
 		this.showList();
@@ -100,6 +111,17 @@ public class ImageViewer extends JFrame{
 				System.err.println("Unable to load image");
 			}
 		}
+		wide_imgs = new ArrayList<JPanel>();
+		for(int i = 1; i < 10; i++) {
+			try {
+				JPanel jp = new JPanel();
+				ImageIcon curr = new ImageIcon(ImageIO.read(new File("img/img_"+ i +".jpg")));
+				jp.add(new JLabel(curr));
+				wide_imgs.add(jp);
+			} catch (IOException e) {
+				System.err.println("Unable to load image : " + e.getMessage());
+			}
+		}
 	}
 	
 	// Mode liste
@@ -118,17 +140,17 @@ public class ImageViewer extends JFrame{
 			ImageIcon curr = new ImageIcon(ImageIO.read(new File("img/img_"+ this.current +".jpg")));
 			this.imgs_pane.add(new JLabel(curr));
 			this.add(imgs_pane, BorderLayout.CENTER);
+			this.revalidate();
 		} catch (IOException e) {
 			System.err.println("Unable to load image");
 		}
+		
 	}
 	
 	// Timer
 	public void justWait(int time) {
-		double curr = System.currentTimeMillis();
-		while(System.currentTimeMillis() < curr + time) {
-			// Just wait
-		}
+		this.t.setDelay(time);
+		t.start();
 	}
 	
 	// set timer level
@@ -158,7 +180,6 @@ public class ImageViewer extends JFrame{
 	// Comportement de l'application selon les états
 	public void behave() {
 		System.out.println("State: " + this.state);
-		// TODO : comportement selon les etats
 		switch(this.state) {
 		case 0:
 			current = 1;
@@ -172,17 +193,19 @@ public class ImageViewer extends JFrame{
 			break;
 			
 		case 2:
-			showImg();
 			backward.setEnabled(true);
 			play.setText("Pause");
 			stop.setEnabled(true);
 			forward.setEnabled(true);
-			//justWait(getTimeToWait());
-			if(current < 9)
-				current += 1;
+			showImg();
+			if(this.current < 9)
+				this.current += 1;
 			else
-				current = 1;
-			behave();
+				this.current = 1;
+			justWait(getTimeToWait());
+			break;
+			
+		case 3:
 			break;
 			
 		default:
